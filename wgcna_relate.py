@@ -30,21 +30,27 @@ r_cmds = \
 library('WGCNA')
 enableWGCNAThreads()
 datME = read.table('{eigengenes}', header=T, row.names=1)
-MEs = orderMEs(MEs0)
+datME = as.data.frame(t(datME))
+MEs = orderMEs(datME)
 traits = read.table("{traits}", header=T, row.names=1)
 if (dim(traits)[2] == 1 & class(traits[1,1])=="factor"){bracket1}
     tmp = model.matrix(~0+ traits[,1])
     colnames(tmp) = levels(traits[,1])
     traits = tmp
 {bracket2}
-correlation = signif(cor(t(datME), traits, use="p", method="{cor_type}", nThreads={threads}), 3)
+traits = as.data.frame(traits)
+correlation = signif(cor(MEs, traits, use="p", method="{cor_type}", nThreads={threads}), 3)
 pvalues = signif(corPvalueStudent(correlation, nSamples = dim(traits)[1]), 3)
 
-sizeGrWindow(10,6)
+pdf(file='Module-Trait.pdf', width = 12, height = 9)
 textMatrix = paste(signif(correlation, 2), "\n(", signif(pvalues, 1), ")", sep = "")
 dim(textMatrix) = dim(correlation)
 par(mar = c(6, 8.5, 3, 3))
-labeledHeatmap(Matrix = correlation, xLabels = names(traits), yLabels = names(MEs), ySymbols = names(MEs), colorLabels = FALSE, colors = greenWhiteRed(50), textMatrix = textMatrix, setStdMargins = FALSE, cex.text = 0.5, zlim = c(-1,1), main = paste("Module-trait relationships"))
+labeledHeatmap(Matrix = correlation, xLabels = names(traits), yLabels = names(MEs), 
+    ySymbols = names(MEs), colorLabels = FALSE, colors = greenWhiteRed(50), 
+    textMatrix = textMatrix, setStdMargins = FALSE, cex.text = 0.5, 
+    zlim = c(-1,1), main = paste("Module-trait relationships"))
+dev.off()
 
 write.table(correlation, 'module_trait.correlation.xls', col.names=NA, quote=F, sep='\\t', row.names=T)
 write.table(pvalues, 'module_trait.correlation_pvalues.xls', col.names=NA, quote=F, sep='\\t', row.names=T)

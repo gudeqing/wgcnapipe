@@ -1,7 +1,12 @@
 # coding=utf-8
 import subprocess
 import argparse
+import matplotlib
+matplotlib.use('agg')
 import pandas as pd
+import glob
+import matplotlib.pyplot as plt
+
 
 
 # get arguments
@@ -183,10 +188,6 @@ with open('module_size.stat.xls', 'w') as f:
 
 
 # ------------------plot-----------------
-import pandas as pd
-import glob
-import matplotlib.pyplot as plt
-
 
 def get_tree_coord(linkage_pd, ordered_leaf, ):
     """
