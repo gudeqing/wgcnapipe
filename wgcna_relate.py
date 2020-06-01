@@ -39,6 +39,8 @@ if (dim(traits)[2] == 1 & class(traits[1,1])=="factor"){bracket1}
     traits = tmp
 {bracket2}
 traits = as.data.frame(traits)
+
+# correlation = signif(bicor(MEs, traits, robustY=F, maxPOutliers = 0.05, nThreads={threads}), 3)
 correlation = signif(cor(MEs, traits, use="p", method="{cor_type}", nThreads={threads}), 3)
 pvalues = signif(corPvalueStudent(correlation, nSamples = dim(traits)[1]), 3)
 
