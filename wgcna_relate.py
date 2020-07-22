@@ -18,7 +18,7 @@ parser.add_argument('-traits', type=str, required=True, metavar="phenotype_data"
                          "或者为样本分组信息文件,第一行是header，第一列为样本id, 第二列为样本分组, "
                          "样本信息必须和输入的表达矩阵完全匹配,不多不少")
 parser.add_argument('-corType', type=str, metavar="correlation_type", default="pearson",
-                    help="correlation type, 'pearson' or 'spearman', 'kendall'")
+                    help="correlation type, one of ['pearson', 'spearman', 'kendall', 'bicor']")
 parser.add_argument('-nThreads', type=int, default=16, )
 args = parser.parse_args()
 
@@ -36,12 +36,17 @@ traits = read.table("{traits}", header=T, row.names=1)
 if (dim(traits)[2] == 1 & class(traits[1,1])=="factor"){bracket1}
     tmp = model.matrix(~0+ traits[,1])
     colnames(tmp) = levels(traits[,1])
+    rownames(tmp) = rownames(traits)
     traits = tmp
 {bracket2}
 traits = as.data.frame(traits)
+traits = traits[rownames(MEs), ]
+if ("{cor_type}" == 'bicor'){bracket1}
+    correlation = signif(bicor(MEs, traits, robustY=F, maxPOutliers = 0.05, nThreads={threads}), 3)
+{bracket2} else {bracket1}
+    correlation = signif(cor(MEs, traits, use="p", method="{cor_type}", nThreads={threads}), 3)
+{bracket2}
 
-# correlation = signif(bicor(MEs, traits, robustY=F, maxPOutliers = 0.05, nThreads={threads}), 3)
-correlation = signif(cor(MEs, traits, use="p", method="{cor_type}", nThreads={threads}), 3)
 pvalues = signif(corPvalueStudent(correlation, nSamples = dim(traits)[1]), 3)
 
 pdf(file='Module-Trait.pdf', width = 12, height = 9)
@@ -50,7 +55,7 @@ dim(textMatrix) = dim(correlation)
 par(mar = c(6, 8.5, 3, 3))
 labeledHeatmap(Matrix = correlation, xLabels = names(traits), yLabels = names(MEs), 
     ySymbols = names(MEs), colorLabels = FALSE, colors = greenWhiteRed(50), 
-    textMatrix = textMatrix, setStdMargins = FALSE, cex.text = 0.5, 
+    textMatrix = textMatrix, setStdMargins = FALSE, cex.text = 0.95, 
     zlim = c(-1,1), main = paste("Module-trait relationships"))
 dev.off()
 
@@ -58,7 +63,11 @@ write.table(correlation, 'module_trait.correlation.xls', col.names=NA, quote=F, 
 write.table(pvalues, 'module_trait.correlation_pvalues.xls', col.names=NA, quote=F, sep='\\t', row.names=T)
 # gene and traits relation
 exp = read.table('{exp_matrix}', header=T, row.names=1)
-correlation2 = signif(cor(t(exp), traits, use="p", method="{cor_type}"), 3)
+if ("{cor_type}" == 'bicor'){bracket1}
+    correlation2 = signif(bicor(t(exp), traits, robustY=F, maxPOutliers = 0.05, nThreads={threads}), 3)
+{bracket2} else {bracket1}
+    correlation2 = signif(cor(t(exp), traits, use="p", method="{cor_type}"), 3)
+{bracket2}
 write.table(correlation2, 'gene_trait.correlation.xls', col.names=NA, quote=F, sep='\\t', row.names=T)
 """.format(
     eigengenes=args.MEs,
