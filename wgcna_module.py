@@ -94,8 +94,8 @@ dev.off()
 # export module and block info
 r_cmd4 = ["""
 # save color list
-membership = cbind(colnames(datExpr), bwnet$colors, bwnet$blocks)
-write.table(membership, 'color.list', col.names=F, quote=F, sep='\\t', row.names=F)
+membership = cbind(bwnet$colors, bwnet$blocks)
+write.table(membership, 'color.list', col.names=F, quote=F, sep='\\t', row.names=T)
 # save dendrogram for each block
 block_number = length(bwnet$dendrograms)
 for (i in c(1:block_number)){
